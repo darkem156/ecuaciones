@@ -12,8 +12,8 @@ B = 0
 C = -3
 d = 1
 F = -1
-a = 1
-b = 1
+a = 0
+b = 0
 
 A1 = 0
 B1 = 1
@@ -21,7 +21,7 @@ C1 = -1
 d1 = -1
 F1 = 4
 a1 = 1
-b1 = 2
+b1 = 0
 '''
 print('A')
 A = float(input())
@@ -68,6 +68,7 @@ def wronskiano(y1, y2, fx):
     return result
 
 det = simplify(Matrix([[A*D+C,B*D+d],[A1*D+C1,B1*D+d1]]).det())
+print(Matrix([[A*D+C,B*D+d],[A1*D+C1,B1*D+d1]]))
 print(det)
 
 expressions = solve(det)
@@ -78,7 +79,7 @@ if expressions != []:
     if len(expressions) == 1:
         exp1 = expressions[0]
         exp2 = expressions[0]
-    elif len(expressions) == 2:
+    elif len(expressions) >= 2:
         exp1 = expressions[0]
         exp2 = expressions[1]
 y1 = E**(exp1*t)
@@ -87,6 +88,11 @@ y2 = E**(exp2*t)
 if exp1 == exp2:
     y1 = E**(exp1*t)
     y2 = t*E**(exp2*t)
+
+if "I" in str(exp1):
+    y1 = (E**(exp1.subs(I, 0)*t))*cos(exp1.subs(I, t))
+if "I" in str(exp2):
+    y2 = (E**(exp1.subs(I, 0)*t))*sin(exp2.subs(I, t))
 
 x = c1*y1+c2*y2
 y = c3*y1+c4*y2
