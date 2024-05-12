@@ -92,6 +92,9 @@ expressions = solve(det)
 exp1 = 0
 exp2 = 0
 if expressions != []:
+    print(expressions)
+    if "I" not in str(expressions):
+        expressions.sort(reverse=False)
     if len(expressions) == 1:
         exp1 = expressions[0]
         exp2 = expressions[0]
@@ -106,43 +109,37 @@ if exp1 == exp2:
     y2 = t*E**(exp2*t)
 
 if "I" in str(exp1):
-    y1 = (E**(exp1.subs(I, 0)*t))*cos(exp1.subs(I, t))
+    y1 = (E**(exp1.subs(I, 0)*t))*cos(im(exp1).subs(I, 1)*t)
 if "I" in str(exp2):
-    y2 = (E**(exp1.subs(I, 0)*t))*sin(exp2.subs(I, t))
+    y2 = (E**(exp2.subs(I, 0)*t))*sin(im(exp2).subs(I, 1)*t)
 
 x = c1*y1+c2*y2
-y = c3*y1+c4*y2
+y = c1*y1+c2*y2
 
-if F == 0 and F1 == 0:
-    ec1 = A*Derivative(x, t) + B*Derivative(y, t) + C*x + d*y
+def replace_D(text):
+    text = str(text)
+    text = text.replace("D", "1D")
+    elements = re.split(r"([+\-=\s])", text)
+    for i, elem in enumerate(elements):
+        if "1D" in elem:
+            match = re.search(r"1D\*\*(\d+)", elem)
+            if match:
+                num = match.group(1)
+                elements[i] = "Derivative(" + elem.replace("D", "") + ", t, " + num + ")"
+            else:
+                elements[i] = "Derivative(" + elem.replace("D", "") + ", t)"
+    return "".join(elements)
 
-    C1 = solve(simplify(ec1.subs(c2,0).subs(c4,0)),c1)[0]
-    C2 = solve(simplify(ec1.subs(c1,0).subs(c3,0)),c2)[0]
-    C3 = solve(simplify(ec1.subs(c2,0).subs(c4,0)),c3)[0]
-    C4 = solve(simplify(ec1.subs(c1,0).subs(c3,0)),c4)[0]
-
-    new_x = x.subs(c1, C1).subs(c2, C2)
-
-    new_y = y.subs(c3, C3).subs(c4, C4)
-
-    print('x=',x)
-    print('y=',new_y)
-
-    print()
-
-    print('x=',new_x)
-    print('y=',y)
-else:
-    y = c1*y1+c2*y2
+if True:
     detx = expand(simplify(Matrix([[F*E**(a*t+b),F1*E**(a1*t+b1)],[B*D+d,B1*D+d1]]).det()))
     dety = expand(simplify(Matrix([[A*D+C,A1*D+C1], [F*E**(a*t+b),F1*E**(a1*t+b1)]]).det()))
-    patron = r"D\*exp\(([^()]+)\)"
-    cadena_reemplazo = r"Derivative(exp(\1),t)"
-    #print(re.sub(patron, cadena_reemplazo, str(detx)))
-    detx = simplify(sympify(re.sub(patron, cadena_reemplazo, str(detx))).subs(D, 0))
-    dety = simplify(sympify(re.sub(patron, cadena_reemplazo, str(dety))).subs(D, 0))
-    #print(detx)
-    #print(dety)
+
+    detx = simplify(replace_D(detx))
+    dety = simplify(replace_D(dety))
+
+    print(detx)
+    print(dety)
+
     if 'D' not in str(det):
         x = detx/det
         y = dety/det
@@ -156,10 +153,11 @@ else:
     #ec = solve(Eq(det, detx), D)
     xp = wronskiano(y1, y2, detx)
     x = expand(simplify(x+xp))
-    print('x=',x)
+    print(x)
     yp = wronskiano(y1, y2, dety)
     wronskiano_y = expand(simplify(y+yp))
-    ec1 = Eq(A*Derivative(x, t) + B*Derivative(y, t) + C*x + d*y,F*E**(a*t+b))
+    print(wronskiano_y)
+    ec1 = Eq(A*Derivative(x, t) + B*Derivative(X, t) + C*x + d*X,F*E**(a*t+b))
     solve_x = solve(ec1, X)
     solve_dx = solve(ec1, Derivative(X, t))
     if solve_x != []:
@@ -180,8 +178,21 @@ else:
 
     if 'X' in str(y) or 'Derivative(X, t)' in str(y):
         y = wronskiano_y
+        ec1 = Eq(A*Derivative(X, t) + B*Derivative(y, t) + C*X + d*y,F*E**(a*t+b))
+        solve_ec1_x = solve(ec1, X)
+        if solve_ec1_x != []:
+            if 'Derivative(X, t)' not in str(solve_ec1_x):
+                print('solving x on ec1')
+        ec2 = Eq(A1*Derivative(X, t) + B1*Derivative(y, t) + C1*X + d1*y,F1*E**(a1*t+b1))
+        solve_ec2_x = solve(ec2, X)
+        if solve_ec2_x != []:
+            if 'Derivative(X, t)' not in str(solve_ec2_x):
+                print('solving x on ec2')
+                x = solve_ec2_x[0]
+    print('x=',x)
     print('y=',y)
 
+    '''
     print('Sustituir en la parte homogenea de la primera ecuacion:')
     result1 = simplify(A*Derivative(x, t) + B*Derivative(y, t) + C*x + d*y)
     print(simplify(result1))
@@ -225,7 +236,8 @@ else:
             print('y=',y)
         result2 = result2.subs(c2, c_value[0])
 
+    '''
+    result1 = simplify(A*Derivative(x, t) + B*Derivative(y, t) + C*x + d*y)
+    result2 = simplify(A1*Derivative(x, t) + B1*Derivative(y, t) + C1*x + d1*y)
     if expand(result1) == expand(F*E**(a*t+b)) and expand(result2) == expand(F1*E**(a1*t+b1)):
         print('El resultado es exacto')
-        print('x =',x)
-        print('y =',y)
