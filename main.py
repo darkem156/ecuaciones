@@ -101,8 +101,6 @@ def wronskiano(expressions, fx):
     solutions = expand(simplify(sympify("+".join(solutions))))
     return solutions
 
-#det = simplify(Matrix([[A*D+C,B*D+d],[A1*D+C1,B1*D+d1]]).det())
-
 solutions = []
 
 def get_solution(eq, result):
@@ -158,13 +156,6 @@ def solve_system(system):
             det = -det
             print(det, current_det)
         solution = get_solution(det, expand(current_det))
-        '''
-        eq = simplify(Eq(det*x, current_det))
-        if 'D' in str(eq.lhs):
-            solution = get_solution(eq.lhs.subs(x,1), eq.rhs.subs(x,1))
-        else:
-            solution = get_solution(eq.rhs.subs(x,1), eq.lhs.subs(x,1))
-        '''
     solutions.append(solution)
     if len(solutions) < vars:
         i = 0
@@ -219,11 +210,9 @@ else:
                 num = coeficiente * coeficientes[coeficiente]
                 results[n] = results[n] - num
                 elements = elements - num
-        #print(elements, '=', results[n])
         s_matrix = []
         for i in range(1, len(ec)+1):
             s_matrix.append(sympify("+".join([str(element) if "x"+str(i) in str(element) else "0" for element in elements.as_ordered_terms()]).replace("LaplaceTransform(x" + str(i) + "(t), t, s)", "1")))
-            #elements = sympify(str(elements).replace('LaplaceTransform(x' + str(i) + '(t), t, s)', "1"))
         laplaces.append(s_matrix)
     det = Matrix(laplaces).det()
     print(laplaces)
@@ -237,66 +226,3 @@ else:
         current_var = expand(simplify(sympify(str(inverse_laplace_transform(current_var, s, t)).replace('Heaviside(t)', "1"))))
         print('x'+str(i+1) + ' =', current_var)
 exit()
-exp1 = 0
-exp2 = 0
-if expressions != []:
-    if "I" not in str(expressions):
-        expressions.sort(reverse=False)
-    if len(expressions) == 1:
-        exp1 = expressions[0]
-        exp2 = expressions[0]
-    elif len(expressions) >= 2:
-        exp1 = expressions[0]
-        exp2 = expressions[1]
-y1 = E**(exp1*t)
-y2 = E**(exp2*t)
-
-if exp1 == exp2:
-    y1 = E**(exp1*t)
-    y2 = t*E**(exp2*t)
-
-if "I" in str(exp1):
-    y1 = (E**(exp1.subs(I, 0)*t))*cos(im(exp1).subs(I, 1)*t)
-if "I" in str(exp2):
-    y2 = (E**(exp2.subs(I, 0)*t))*sin(im(exp2).subs(I, 1)*t)
-
-x = c1*y1+c2*y2
-y = c1*y1+c2*y2
-
-if x0 != None and y0 != None:
-    x = Function('x')(t)
-    y = Function('y')(t)
-    s, t = symbols('s t')
-    ec1 = A*Derivative(x, t) + B*Derivative(y, t) + C*x + d*y-(F*E**(a*t+b))
-    ec2 = A1*Derivative(x, t) + B1*Derivative(y, t) + C1*x + d1*y-(F1*E**(a1*t+b1))
-    laplace_ec1 = laplace_transform(ec1, t, s, noconds=True)
-    laplace_ec1 = sympify(str(laplace_ec1).replace("x(0)", str(x0)).replace("y(0)", str(y0)))
-    coeficientes = laplace_ec1.as_coefficients_dict()
-    coeficientes_matrix = [0, 0]
-    if Integer(1) in coeficientes:
-        coeficientes_matrix[0] = -1*coeficientes.pop(Integer(1))
-    laplace_ec1 = sympify(str(laplace_ec1).replace(" ", "").replace(str(coeficientes_matrix[0]), "0"))
-    laplace_ec2 = laplace_transform(ec2, t, s, noconds=True)
-    laplace_ec2 = sympify(str(laplace_ec2).replace("x(0)", str(x0)).replace("y(0)", str(y0)))
-    coeficientes = laplace_ec2.as_coefficients_dict()
-    if Integer(1) in coeficientes:
-        coeficientes_matrix[1] = -1*coeficientes.pop(Integer(1))
-    laplace_ec2 = sympify(str(laplace_ec2).replace(" ", "").replace(str(coeficientes_matrix[1]), "0"))
-
-    xs = [
-        sympify(str(laplace_ec1).replace("LaplaceTransform(x(t), t, s)", "1").replace("LaplaceTransform(y(t), t, s)", "0")),
-        sympify(str(laplace_ec2).replace("LaplaceTransform(x(t), t, s)", "1").replace("LaplaceTransform(y(t), t, s)", "0")),
-    ]
-    ys = [
-        sympify(str(laplace_ec1).replace("LaplaceTransform(x(t), t, s)", "0").replace("LaplaceTransform(y(t), t, s)", "1")),
-        sympify(str(laplace_ec2).replace("LaplaceTransform(x(t), t, s)", "0").replace("LaplaceTransform(y(t), t, s)", "1")),
-    ]
-
-    det = Matrix([xs, ys]).det()
-    print(det)
-    detx = Matrix([coeficientes_matrix, ys]).det()
-    xt = sympify(str(inverse_laplace_transform(detx/det, s, t)).replace("Heaviside(t)", "1"))
-    dety = Matrix([xs, coeficientes_matrix]).det()
-    yt = sympify(str(inverse_laplace_transform(dety/det, s, t)).replace("Heaviside(t)", "1"))
-    print(xt)
-    print(yt)
